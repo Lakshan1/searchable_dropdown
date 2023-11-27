@@ -68,6 +68,14 @@ class SearchableDropdown<T> extends StatefulWidget {
     Duration? changeCompletionDelay,
     double? width,
     bool isDialogExpanded = true,
+    // Colors - Lakshan
+    Color? dropdownBackgroundColor,
+    Color? searchBackgroundColor,
+    Icon? searchIcon,
+    TextStyle? searchTextStyle,
+    int dropdownTopMargin = 0,
+    VoidCallback? onButtonClick,
+    VoidCallback? onButtonClose,
   }) : this._(
           key: key,
           paginatedRequest: paginatedRequest,
@@ -87,6 +95,13 @@ class SearchableDropdown<T> extends StatefulWidget {
           changeCompletionDelay: changeCompletionDelay,
           width: width,
           isDialogExpanded: isDialogExpanded,
+          dropdownBackgroundColor: dropdownBackgroundColor,
+          searchBackgroundColor: searchBackgroundColor,
+          searchIcon: searchIcon,
+          searchTextStyle: searchTextStyle,
+          dropdownTopMargin: dropdownTopMargin,
+          onButtonClick: onButtonClick,
+          onButtonClose: onButtonClose
         );
 
   const SearchableDropdown.future({
@@ -150,6 +165,13 @@ class SearchableDropdown<T> extends StatefulWidget {
     this.changeCompletionDelay,
     this.width,
     this.isDialogExpanded = false,
+    this.dropdownBackgroundColor,
+    this.searchBackgroundColor,
+    this.searchIcon,
+    this.searchTextStyle,
+    this.dropdownTopMargin = 0,
+    this.onButtonClick,
+    this.onButtonClose
   });
 
   //Is dropdown enabled
@@ -214,6 +236,15 @@ class SearchableDropdown<T> extends StatefulWidget {
   /// Background decoration of dropdown, i.e. with this you can wrap dropdown with Card.
   final Widget Function(Widget child)? backgroundDecoration;
 
+  // Colors - Lakshan
+  final Color? dropdownBackgroundColor;
+  final Color? searchBackgroundColor;
+  final Icon? searchIcon;
+  final TextStyle? searchTextStyle;
+  final int dropdownTopMargin;
+  final VoidCallback? onButtonClick;
+  final VoidCallback? onButtonClose;
+
   @override
   State<SearchableDropdown<T>> createState() => _SearchableDropdownState<T>();
 }
@@ -259,16 +290,123 @@ class _SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
       trailingClearIcon: widget.trailingClearIcon,
       changeCompletionDelay: widget.changeCompletionDelay,
       isDialogExpanded: widget.isDialogExpanded,
+      dropdownBackgroundColor: widget.dropdownBackgroundColor,
+      searchBackgroundColor: widget.searchBackgroundColor,
+      searchIcon: widget.searchIcon,
+      searchTextStyle: widget.searchTextStyle,
+      dropdownTopMargin: widget.dropdownTopMargin,
+      onButtonClick: widget.onButtonClick,
     );
 
     return SizedBox(
       key: controller.key,
       width: widget.width ?? MediaQuery.of(context).size.width,
-      child:
-          widget.backgroundDecoration?.call(dropdownWidget) ?? dropdownWidget,
+      child:TapRegion(
+        behavior: HitTestBehavior.deferToChild,
+        onTapInside: (event) {
+          if (widget.isEnabled) {
+            showDropdownDialog(context, controller);
+          } else {
+            widget.disabledOnTap?.call();
+          }
+          widget.onButtonClick?.call();
+        },
+        onTapOutside: (event) {
+          widget.onButtonClose?.call();
+        
+        },
+        child: widget.backgroundDecoration?.call(dropdownWidget) ?? dropdownWidget,
+      )
+          
+    );
+  }
+
+  void showDropdownDialog(
+    BuildContext context,
+    SearchableDropdownController<T> controller,
+  ) {
+    var isReversed = false;
+    final deviceHeight = context.deviceHeight;
+    final dropdownGlobalPointBounds = controller.key.globalPaintBounds;
+    final alertDialogMaxHeight = widget.dropDownMaxHeight ?? deviceHeight * 0.35;
+    var dialogOffset = widget.dropdownTopMargin; //Dialog offset from dropdown
+
+    final dropdownPositionFromBottom = dropdownGlobalPointBounds != null
+        ? deviceHeight - dropdownGlobalPointBounds.bottom
+        : null;
+    var dialogPositionFromBottom = dropdownPositionFromBottom != null
+        ? dropdownPositionFromBottom - alertDialogMaxHeight
+        : null;
+    if (dialogPositionFromBottom != null) {
+      //If dialog couldn't fit the screen, reverse it
+      if (dialogPositionFromBottom <= 0) {
+        isReversed = true;
+        final dropdownHeight = dropdownGlobalPointBounds?.height ?? 54;
+        dialogPositionFromBottom +=
+            alertDialogMaxHeight + dropdownHeight - dialogOffset;
+      } else {
+        dialogPositionFromBottom -= dialogOffset;
+      }
+    }
+    if (controller.items == null) {
+      if (widget.paginatedRequest != null) {
+        controller.getItemsWithPaginatedRequest(page: 1, isNewSearch: true);
+      }
+      if (widget.futureRequest != null) controller.getItemsWithFutureRequest();
+    } else {
+      controller.searchedItems.value = controller.items;
+    }
+    //Show the dialog
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        var reCalculatePosition = dialogPositionFromBottom;
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        //If keyboard pushes the dialog, recalculate the dialog's position.
+        if (reCalculatePosition != null &&
+            reCalculatePosition <= keyboardHeight) {
+          reCalculatePosition =
+              (keyboardHeight - reCalculatePosition) + reCalculatePosition;
+        }
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: reCalculatePosition ?? 0,
+            left: widget.isDialogExpanded ? 16 : dropdownGlobalPointBounds?.left ?? 0,
+            right: widget.isDialogExpanded ? 16 : 0,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: widget.isDialogExpanded
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: alertDialogMaxHeight,
+                width:
+                    widget.isDialogExpanded ? null : dropdownGlobalPointBounds?.width,
+                child: _DropDownCard(
+                  controller: controller,
+                  isReversed: isReversed,
+                  noRecordText: widget.noRecordText,
+                  onChanged: widget.onChanged,
+                  paginatedRequest: widget.paginatedRequest,
+                  searchHintText: widget.searchHintText,
+                  changeCompletionDelay: widget.changeCompletionDelay,
+                  dropdownBackgroundColor: widget.dropdownBackgroundColor,
+                  searchBackgroundColor: widget.searchBackgroundColor,
+                  searchIcon: widget.searchIcon,
+                  searchTextStyle: widget.searchTextStyle,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      barrierColor: Colors.transparent,
     );
   }
 }
+
 
 class _DropDown<T> extends StatelessWidget {
   const _DropDown({
@@ -288,6 +426,12 @@ class _DropDown<T> extends StatelessWidget {
     this.onChanged,
     this.searchHintText,
     this.changeCompletionDelay,
+    this.dropdownBackgroundColor,
+    this.searchBackgroundColor,
+    this.searchIcon,
+    this.searchTextStyle,
+    this.dropdownTopMargin = 0,
+    this.onButtonClick,
   });
 
   final bool isEnabled;
@@ -310,18 +454,17 @@ class _DropDown<T> extends StatelessWidget {
   final Widget? hintText;
   final Widget? noRecordText;
 
+  // Colors - Lakshan
+  final Color? dropdownBackgroundColor;
+  final Color? searchBackgroundColor;
+  final Icon? searchIcon;
+  final TextStyle? searchTextStyle;
+  final int dropdownTopMargin;
+  final VoidCallback? onButtonClick;
+
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        if (isEnabled) {
-          showDropdownDialog(context, controller);
-        } else {
-          disabledOnTap?.call();
-        }
-      },
-      child: Padding(
+    return Padding(
         padding: margin ?? const EdgeInsets.all(8),
         child: Row(
           children: [
@@ -368,89 +511,7 @@ class _DropDown<T> extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void showDropdownDialog(
-    BuildContext context,
-    SearchableDropdownController<T> controller,
-  ) {
-    var isReversed = false;
-    final deviceHeight = context.deviceHeight;
-    final dropdownGlobalPointBounds = controller.key.globalPaintBounds;
-    final alertDialogMaxHeight = dropDownMaxHeight ?? deviceHeight * 0.35;
-    const dialogOffset = 35; //Dialog offset from dropdown
-
-    final dropdownPositionFromBottom = dropdownGlobalPointBounds != null
-        ? deviceHeight - dropdownGlobalPointBounds.bottom
-        : null;
-    var dialogPositionFromBottom = dropdownPositionFromBottom != null
-        ? dropdownPositionFromBottom - alertDialogMaxHeight
-        : null;
-    if (dialogPositionFromBottom != null) {
-      //If dialog couldn't fit the screen, reverse it
-      if (dialogPositionFromBottom <= 0) {
-        isReversed = true;
-        final dropdownHeight = dropdownGlobalPointBounds?.height ?? 54;
-        dialogPositionFromBottom +=
-            alertDialogMaxHeight + dropdownHeight - dialogOffset;
-      } else {
-        dialogPositionFromBottom -= dialogOffset;
-      }
-    }
-    if (controller.items == null) {
-      if (paginatedRequest != null) {
-        controller.getItemsWithPaginatedRequest(page: 1, isNewSearch: true);
-      }
-      if (futureRequest != null) controller.getItemsWithFutureRequest();
-    } else {
-      controller.searchedItems.value = controller.items;
-    }
-    //Show the dialog
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        var reCalculatePosition = dialogPositionFromBottom;
-        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-        //If keyboard pushes the dialog, recalculate the dialog's position.
-        if (reCalculatePosition != null &&
-            reCalculatePosition <= keyboardHeight) {
-          reCalculatePosition =
-              (keyboardHeight - reCalculatePosition) + reCalculatePosition;
-        }
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: reCalculatePosition ?? 0,
-            left: isDialogExpanded ? 16 : dropdownGlobalPointBounds?.left ?? 0,
-            right: isDialogExpanded ? 16 : 0,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: isDialogExpanded
-                ? CrossAxisAlignment.center
-                : CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: alertDialogMaxHeight,
-                width:
-                    isDialogExpanded ? null : dropdownGlobalPointBounds?.width,
-                child: _DropDownCard(
-                  controller: controller,
-                  isReversed: isReversed,
-                  noRecordText: noRecordText,
-                  onChanged: onChanged,
-                  paginatedRequest: paginatedRequest,
-                  searchHintText: searchHintText,
-                  changeCompletionDelay: changeCompletionDelay,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-      barrierColor: Colors.transparent,
-    );
+      );
   }
 }
 
@@ -490,6 +551,10 @@ class _DropDownCard<T> extends StatelessWidget {
     this.onChanged,
     this.noRecordText,
     this.changeCompletionDelay,
+    this.dropdownBackgroundColor,
+    this.searchBackgroundColor,
+    this.searchIcon,
+    this.searchTextStyle
   });
 
   final bool isReversed;
@@ -503,6 +568,12 @@ class _DropDownCard<T> extends StatelessWidget {
   final void Function(T? value)? onChanged;
   final Widget? noRecordText;
 
+  //Lakshan
+  final Color? dropdownBackgroundColor;
+  final Color? searchBackgroundColor;
+  final Icon? searchIcon;
+  final TextStyle? searchTextStyle;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -511,21 +582,30 @@ class _DropDownCard<T> extends StatelessWidget {
       children: [
         Flexible(
           child: Card(
+            color: dropdownBackgroundColor ?? Colors.white, //need to make it dynamic by get this as argument
             margin: EdgeInsets.zero,
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.only(top:0,bottom: 4),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 verticalDirection:
                     isReversed ? VerticalDirection.up : VerticalDirection.down,
                 children: [
-                  _DropDownSearchBar(
-                    controller: controller,
-                    searchHintText: searchHintText,
-                    changeCompletionDelay: changeCompletionDelay,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: searchBackgroundColor ?? Colors.white, //need to make it dynamic by get this as argument
+                      borderRadius: BorderRadius.vertical(top:Radius.circular(8)),
+                    ),
+                    child: _DropDownSearchBar(
+                      controller: controller,
+                      searchHintText: searchHintText,
+                      changeCompletionDelay: changeCompletionDelay,
+                      searchIcon: searchIcon,
+                      searchTextStyle: searchTextStyle,
+                    ),
                   ),
                   Flexible(
                     child: _DropDownListView(
@@ -551,10 +631,16 @@ class _DropDownSearchBar<T> extends StatelessWidget {
     required this.controller,
     this.searchHintText,
     this.changeCompletionDelay,
+    this.searchIcon,
+    this.searchTextStyle,
   });
   final Duration? changeCompletionDelay;
   final SearchableDropdownController<T> controller;
   final String? searchHintText;
+  
+  //Lakshan
+  final Icon? searchIcon;
+  final TextStyle? searchTextStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -565,8 +651,9 @@ class _DropDownSearchBar<T> extends StatelessWidget {
         changeCompletionDelay:
             changeCompletionDelay ?? const Duration(milliseconds: 200),
         hintText: searchHintText ?? 'Search',
-        isOutlined: true,
-        leadingIcon: const Icon(Icons.search, size: 24),
+        isOutlined: false,
+        leadingIcon: searchIcon ?? Icon(Icons.search, size: 24, color: Colors.black,), //need to make it dynamic by get this as argument
+        style: searchTextStyle ?? TextStyle(color: Colors.black), //need to make it dynamic by get this as argument
         onChangeComplete: (value) {
           controller.searchText = value;
           if (controller.items != null) {
