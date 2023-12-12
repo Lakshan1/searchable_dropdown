@@ -709,6 +709,8 @@ class _DropDownListView<T> extends StatelessWidget {
                     )
                   : Scrollbar(
                       thumbVisibility: true,
+                      trackVisibility: false,
+                      thickness: 0,
                       controller: controller.scrollController,
                       child: NotificationListener(
                         child: ListView.builder(
