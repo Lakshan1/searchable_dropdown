@@ -76,6 +76,7 @@ class SearchableDropdown<T> extends StatefulWidget {
     int dropdownTopMargin = 0,
     VoidCallback? onButtonClick,
     VoidCallback? onButtonClose,
+    double? dropdownWidth
   }) : this._(
           key: key,
           paginatedRequest: paginatedRequest,
@@ -101,7 +102,8 @@ class SearchableDropdown<T> extends StatefulWidget {
           searchTextStyle: searchTextStyle,
           dropdownTopMargin: dropdownTopMargin,
           onButtonClick: onButtonClick,
-          onButtonClose: onButtonClose
+          onButtonClose: onButtonClose,
+          dropdownWidth: dropdownWidth
         );
 
   const SearchableDropdown.future({
@@ -171,7 +173,8 @@ class SearchableDropdown<T> extends StatefulWidget {
     this.searchTextStyle,
     this.dropdownTopMargin = 0,
     this.onButtonClick,
-    this.onButtonClose
+    this.onButtonClose,
+    this.dropdownWidth
   });
 
   //Is dropdown enabled
@@ -244,6 +247,7 @@ class SearchableDropdown<T> extends StatefulWidget {
   final int dropdownTopMargin;
   final VoidCallback? onButtonClick;
   final VoidCallback? onButtonClose;
+  final double? dropdownWidth;
 
   @override
   State<SearchableDropdown<T>> createState() => _SearchableDropdownState<T>();
@@ -396,6 +400,7 @@ class _SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
                   searchBackgroundColor: widget.searchBackgroundColor,
                   searchIcon: widget.searchIcon,
                   searchTextStyle: widget.searchTextStyle,
+                  dropdownWidth: widget.dropdownWidth
                 ),
               ),
             ],
@@ -535,7 +540,7 @@ class _DropDownText<T> extends StatelessWidget {
                   selectedItem!.label,
                   maxLines: 1,
                   overflow: TextOverflow.fade,
-                )
+                ) 
               : hintText) ??
           const SizedBox.shrink(),
     );
@@ -554,7 +559,8 @@ class _DropDownCard<T> extends StatelessWidget {
     this.dropdownBackgroundColor,
     this.searchBackgroundColor,
     this.searchIcon,
-    this.searchTextStyle
+    this.searchTextStyle,
+    this.dropdownWidth
   });
 
   final bool isReversed;
@@ -573,14 +579,17 @@ class _DropDownCard<T> extends StatelessWidget {
   final Color? searchBackgroundColor;
   final Icon? searchIcon;
   final TextStyle? searchTextStyle;
+  final double? dropdownWidth;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Container(
+      width: dropdownWidth ?? MediaQuery.of(context).size.width,
+      child: Column(
       mainAxisAlignment:
           isReversed ? MainAxisAlignment.end : MainAxisAlignment.start,
       children: [
-        Flexible(
+        Flexible( 
           child: Card(
             color: dropdownBackgroundColor ?? Colors.white, //need to make it dynamic by get this as argument
             margin: EdgeInsets.zero,
@@ -622,6 +631,7 @@ class _DropDownCard<T> extends StatelessWidget {
           ),
         ),
       ],
+    ),
     );
   }
 }
