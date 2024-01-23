@@ -76,7 +76,8 @@ class SearchableDropdown<T> extends StatefulWidget {
     int dropdownTopMargin = 0,
     VoidCallback? onButtonClick,
     VoidCallback? onButtonClose,
-    double? dropdownWidth
+    double? dropdownWidth,
+    Color? searchCursorColor
   }) : this._(
           key: key,
           paginatedRequest: paginatedRequest,
@@ -103,7 +104,8 @@ class SearchableDropdown<T> extends StatefulWidget {
           dropdownTopMargin: dropdownTopMargin,
           onButtonClick: onButtonClick,
           onButtonClose: onButtonClose,
-          dropdownWidth: dropdownWidth
+          dropdownWidth: dropdownWidth,
+          searchCursorColor: searchCursorColor
         );
 
   const SearchableDropdown.future({
@@ -174,7 +176,8 @@ class SearchableDropdown<T> extends StatefulWidget {
     this.dropdownTopMargin = 0,
     this.onButtonClick,
     this.onButtonClose,
-    this.dropdownWidth
+    this.dropdownWidth,
+    this.searchCursorColor
   });
 
   //Is dropdown enabled
@@ -248,6 +251,7 @@ class SearchableDropdown<T> extends StatefulWidget {
   final VoidCallback? onButtonClick;
   final VoidCallback? onButtonClose;
   final double? dropdownWidth;
+  final Color? searchCursorColor;
 
   @override
   State<SearchableDropdown<T>> createState() => _SearchableDropdownState<T>();
@@ -400,7 +404,8 @@ class _SearchableDropdownState<T> extends State<SearchableDropdown<T>> {
                   searchBackgroundColor: widget.searchBackgroundColor,
                   searchIcon: widget.searchIcon,
                   searchTextStyle: widget.searchTextStyle,
-                  dropdownWidth: widget.dropdownWidth
+                  dropdownWidth: widget.dropdownWidth,
+                  searchCursorColor: widget.searchCursorColor,
                 ),
               ),
             ],
@@ -560,7 +565,8 @@ class _DropDownCard<T> extends StatelessWidget {
     this.searchBackgroundColor,
     this.searchIcon,
     this.searchTextStyle,
-    this.dropdownWidth
+    this.dropdownWidth,
+    this.searchCursorColor
   });
 
   final bool isReversed;
@@ -580,6 +586,7 @@ class _DropDownCard<T> extends StatelessWidget {
   final Icon? searchIcon;
   final TextStyle? searchTextStyle;
   final double? dropdownWidth;
+  final Color? searchCursorColor;
 
   @override
   Widget build(BuildContext context) {
@@ -592,6 +599,7 @@ class _DropDownCard<T> extends StatelessWidget {
         Flexible( 
           child: Card(
             color: dropdownBackgroundColor ?? Colors.white, //need to make it dynamic by get this as argument
+            surfaceTintColor: dropdownBackgroundColor,
             margin: EdgeInsets.zero,
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -605,7 +613,7 @@ class _DropDownCard<T> extends StatelessWidget {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: searchBackgroundColor ?? Colors.white, //need to make it dynamic by get this as argument
+                      color: dropdownBackgroundColor ?? Colors.white, //need to make it dynamic by get this as argument
                       borderRadius: BorderRadius.vertical(top:Radius.circular(8)),
                     ),
                     child: _DropDownSearchBar(
@@ -614,6 +622,8 @@ class _DropDownCard<T> extends StatelessWidget {
                       changeCompletionDelay: changeCompletionDelay,
                       searchIcon: searchIcon,
                       searchTextStyle: searchTextStyle,
+                      searchBackgroundColor: searchBackgroundColor,
+                      searchCursorColor: searchCursorColor,
                     ),
                   ),
                   Flexible(
@@ -643,6 +653,8 @@ class _DropDownSearchBar<T> extends StatelessWidget {
     this.changeCompletionDelay,
     this.searchIcon,
     this.searchTextStyle,
+    this.searchBackgroundColor,
+    this.searchCursorColor
   });
   final Duration? changeCompletionDelay;
   final SearchableDropdownController<T> controller;
@@ -651,6 +663,8 @@ class _DropDownSearchBar<T> extends StatelessWidget {
   //Lakshan
   final Icon? searchIcon;
   final TextStyle? searchTextStyle;
+  final Color? searchBackgroundColor;
+  final Color? searchCursorColor;
 
   @override
   Widget build(BuildContext context) {
@@ -663,7 +677,9 @@ class _DropDownSearchBar<T> extends StatelessWidget {
         hintText: searchHintText ?? 'Search',
         isOutlined: false,
         leadingIcon: searchIcon ?? Icon(Icons.search, size: 24, color: Colors.black,), //need to make it dynamic by get this as argument
-        style: searchTextStyle ?? TextStyle(color: Colors.black), //need to make it dynamic by get this as argument
+        style: searchTextStyle ?? TextStyle(color: Colors.white), //need to make it dynamic by get this as argument
+        backgrundColor: searchBackgroundColor ?? Colors.white,
+        cursorColor: searchCursorColor ?? Colors.white,
         onChangeComplete: (value) {
           controller.searchText = value;
           if (controller.items != null) {
@@ -767,7 +783,7 @@ class _DropDownListView<T> extends StatelessWidget {
   }
 
   EdgeInsets listViewPadding({required bool isReversed}) {
-    const itemHeight = 48.0; //Needed offset to show progress indicator
+    const itemHeight = 10.0; //Needed offset to show progress indicator
     return EdgeInsets.only(
       left: 8,
       right: 8,

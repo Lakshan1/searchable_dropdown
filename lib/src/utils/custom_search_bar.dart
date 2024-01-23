@@ -14,6 +14,8 @@ class CustomSearchBar extends StatelessWidget {
     this.focusNode,
     this.controller,
     this.style,
+    this.backgrundColor,
+    this.cursorColor
   });
 
   /// Klavyeden değer girme işlemi bittikten kaç milisaniye sonra on change complete fonksiyonunun tetikleneceğini belirler.
@@ -23,11 +25,13 @@ class CustomSearchBar extends StatelessWidget {
   final String? hintText;
   final TextEditingController? controller;
   final TextStyle? style;
+  final Color? backgrundColor;
 
   /// Cancelable operation ile klavyeden değer girme işlemi kontrol edilir.
   /// Verilen delay içerisinde klavyeden yeni bir giriş olmaz ise bu fonksiyon tetiklenir.
   final void Function(String value)? onChangeComplete;
   final Widget? leadingIcon;
+  final Color? cursorColor;
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +57,11 @@ class CustomSearchBar extends StatelessWidget {
                 focusNode: focusNode,
                 controller: controller,
                 style: style,
+                cursorColor: cursorColor,
               ),
             )
           : Card(
+              color: backgrundColor ?? Colors.white,
               margin: EdgeInsets.zero,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -68,6 +74,7 @@ class CustomSearchBar extends StatelessWidget {
                 focusNode: focusNode,
                 controller: controller,
                 style: style,
+                cursorColor: cursorColor,
               ),
             ),
     );
@@ -83,6 +90,7 @@ class _SearchBarTextField extends StatelessWidget {
     this.focusNode,
     this.controller,
     this.style,
+    this.cursorColor
   });
 
   final Duration changeCompletionDelay;
@@ -92,6 +100,7 @@ class _SearchBarTextField extends StatelessWidget {
   final TextStyle? style;
   final void Function(String value)? onChangeComplete;
   final Widget? leadingIcon;
+  final Color? cursorColor;
 
   @override
   Widget build(BuildContext context) {
@@ -117,12 +126,14 @@ class _SearchBarTextField extends StatelessWidget {
             onChangeComplete?.call(value);
           });
         },
+        cursorColor: cursorColor,
         style: style,
         decoration: InputDecoration(
           contentPadding: EdgeInsets.zero,
           isDense: true,
           border: InputBorder.none,
           hintText: hintText,
+          hintStyle: style,
           icon: leadingIcon,
         ),
       ),
