@@ -23,7 +23,7 @@ class CustomInkwell extends StatelessWidget {
       onTap: onTap,
       borderRadius: const BorderRadius.all(Radius.circular(8)),
       child: Padding(
-        padding: padding ?? const EdgeInsets.all(8),
+        padding: padding ?? const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
         child: child,
       ),
     );
